@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-// EtcdV3Register implements etcd registry.
-type EtcdV3Register struct {
+// EtcdV3Registry implements etcd registry.
+type EtcdV3Registry struct {
 
 	// service address, for example, 127.0.0.1:8972
 	ServiceAddress string
@@ -21,7 +21,7 @@ type EtcdV3Register struct {
 	// etcd addresses
 	EtcdServers []string
 
-	// base path for dpcx server, for example example/dpcx
+	// base path for auxrcx server, for example example/auxrcx
 	BasePath string
 
 	// Registered services
@@ -56,7 +56,7 @@ type service struct {
 var initOnceLock sync.Once
 
 // initEtcd 初始化etcd连接
-func (register *EtcdV3Register) initEtcd() error {
+func (register *EtcdV3Registry) initEtcd() error {
 
 	var err error
 	var cli *clientv3.Client
@@ -78,7 +78,7 @@ func (register *EtcdV3Register) initEtcd() error {
 }
 
 // Init 初始化Etcd注册
-func (register *EtcdV3Register) Init() error {
+func (register *EtcdV3Registry) Init() error {
 	err := register.initEtcd()
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func (register *EtcdV3Register) Init() error {
 }
 
 // Stop 停止服务注册
-func (register *EtcdV3Register) Stop() error {
+func (register *EtcdV3Registry) Stop() error {
 	// 注销所有服务
 	for serviceName := range register.services {
 		_ = register.Unregister(serviceName)
@@ -104,7 +104,7 @@ func (register *EtcdV3Register) Stop() error {
 }
 
 // Register 服务注册
-func (register *EtcdV3Register) Register(serviceName string, metadata string) error {
+func (register *EtcdV3Registry) Register(serviceName string, metadata string) error {
 	// 设置租约时间
 	resp, err := register.kv.Grant(context.Background(), register.Lease)
 	if err != nil {
@@ -160,7 +160,7 @@ func (register *EtcdV3Register) Register(serviceName string, metadata string) er
 }
 
 // Unregister 注销服务
-func (register *EtcdV3Register) Unregister(serviceName string) error {
+func (register *EtcdV3Registry) Unregister(serviceName string) error {
 	if "" == strings.TrimSpace(serviceName) {
 		return errors.New("register service `name` can't be empty")
 	}
@@ -194,11 +194,11 @@ func (register *EtcdV3Register) Unregister(serviceName string) error {
 
 
 // GetMetrics 获取Meter
-func (register *EtcdV3Register) GetMetrics() metrics.Meter {
+func (register *EtcdV3Registry) GetMetrics() metrics.Meter {
 	return register.Metrics
 }
 
 // IsShowMetricsLog 是否显示监控日志
-func (register *EtcdV3Register) IsShowMetricsLog() bool {
+func (register *EtcdV3Registry) IsShowMetricsLog() bool {
 	return register.ShowMetricsLog
 }

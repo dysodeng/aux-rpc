@@ -34,7 +34,7 @@ protoc --go_out=plugins=grpc:./ ./demo.proto
 package main
 import (
 	"github.com/dysodeng/aux-rpc"
-	"github.com/dysodeng/aux-rpc/register"
+	"github.com/dysodeng/aux-rpc/registry"
 	demo "github.com/dysodeng/aux-rpc/rpc/proto"
 	"github.com/dysodeng/aux-rpc/rpc/service"
 	"github.com/rcrowley/go-metrics"
@@ -43,7 +43,7 @@ import (
 	"os/signal"
 )
 func main() {
-    etcdV3Register := &register.EtcdV3Register{
+    etcdV3Register := &registry.EtcdV3Register{
         ServiceAddress: "127.0.0.1:9000",
         EtcdServers:    []string{"localhost:2379"},
         BasePath:       "demo/rpc",
@@ -51,7 +51,7 @@ func main() {
         Metrics: 		metrics.NewMeter(),
     }
     
-    rpcServer := drpc.NewServer(etcdV3Register)
+    rpcServer := auxrpc.NewServer(etcdV3Register)
     defer func() {
         if err := recover(); err != nil {
             _ = rpcServer.Stop()
@@ -61,7 +61,7 @@ func main() {
     _ = rpcServer.Register("DemoService", &service.DemoService{}, demo.RegisterDemoServer, "")
 
     go func() {
-        rpcServer.Serve(ip + ":9000")
+        rpcServer.Serve("127.0.0.1:9000")
     }()
 
     // 等待中断信号以优雅地关闭服务器
@@ -130,5 +130,3 @@ Installation
 ```sh
 go get github.com/dysodeng/aux-rpc
 ```
-
-

@@ -1,4 +1,4 @@
-package aux_rpc
+package auxrpc
 
 import (
 	"context"

@@ -81,6 +81,7 @@ func (s *Server) Register(serviceName string, service interface{}, grpcRegister 
 	if fn.Kind() != reflect.Func {
 		return errors.New("`grpcRegister` is not a grpc registration function")
 	}
+
 	params := make([]reflect.Value, 2)
 	params[0] = reflect.ValueOf(s.grpcServer)
 	params[1] = reflect.ValueOf(service)

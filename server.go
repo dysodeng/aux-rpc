@@ -3,15 +3,16 @@ package auxrpc
 import (
 	"context"
 	"errors"
-	"github.com/dysodeng/aux-rpc/registry"
-	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/rcrowley/go-metrics"
-	"google.golang.org/grpc"
 	"log"
 	"net"
 	"os"
 	"reflect"
 	"time"
+
+	"github.com/dysodeng/aux-rpc/registry"
+	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/rcrowley/go-metrics"
+	"google.golang.org/grpc"
 )
 
 // Server grpc服务注册

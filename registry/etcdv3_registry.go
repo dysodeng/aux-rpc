@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/rcrowley/go-metrics"
-	"go.etcd.io/etcd/client/v3"
 	"log"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/rcrowley/go-metrics"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // EtcdV3Registry implements etcd registry.
@@ -191,7 +192,6 @@ func (register *EtcdV3Registry) Unregister(serviceName string) error {
 
 	return nil
 }
-
 
 // GetMetrics 获取Meter
 func (register *EtcdV3Registry) GetMetrics() metrics.Meter {

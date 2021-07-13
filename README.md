@@ -43,7 +43,7 @@ import (
 	"os/signal"
 )
 func main() {
-    etcdV3Register := &registry.EtcdV3Register{
+    etcdV3Register := &registry.EtcdV3Registry{
         ServiceAddress: "127.0.0.1:9000",
         EtcdServers:    []string{"localhost:2379"},
         BasePath:       "demo/rpc",
@@ -78,26 +78,38 @@ func main() {
 package main
 import (
     "context"
+    "fmt"
     "github.com/dysodeng/aux-rpc/discovery"
     demo "github.com/dysodeng/aux-rpc/rpc/proto"
     "github.com/dysodeng/aux-rpc/rpc/service"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"google.golang.org/grpc"
     "google.golang.org/grpc/codes"
-    "google.golang.org/grpc/status"
     "log"
     "time"
 )
 func main() {
-    d, err := discovery.NewEtcdV3Discovery([]string{"127.0.0.1:2379"}, "demo/rpc")
-    if err != nil {
-        log.Fatalln(err)
-    }
-    defer d.Close()
+	etcdClient, err := clientv3.New(clientv3.Config{
+		Endpoints:   []string{"127.0.0.1:2379"},
+		DialTimeout: 5 * time.Second,
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	d := discovery.NewEtcdV3Discovery(etcdClient, "demo/rpc")
+
+	// 连接rpc
+	conn, err := grpc.Dial(
+		d.Scheme()+":///HelloService",
+		grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"LoadBalancingPolicy": "%s"}`, "round_robin")),
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+	)
     
     demoCtx, demoCancel := context.WithDeadline(context.Background(), time.Now().Add(3 * time.Second))
     defer demoCancel()
     
-    demoConn := d.Conn("DemoService")
-    demoService := demo.NewDemoClient(demoConn)
+    demoService := demo.NewDemoClient(conn)
     demoRes, err := demoService.UserInfo(demoCtx, &demo.Request{Uid: 1})
     if err != nil {
         //获取错误状态

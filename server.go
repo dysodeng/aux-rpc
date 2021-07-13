@@ -2,12 +2,13 @@ package auxrpc
 
 import (
 	"context"
-	"errors"
 	"log"
 	"net"
 	"os"
 	"reflect"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/dysodeng/aux-rpc/registry"
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"

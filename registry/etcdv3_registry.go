@@ -2,12 +2,13 @@ package registry
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/rcrowley/go-metrics"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -106,8 +107,11 @@ func (register *EtcdV3Registry) Stop() error {
 
 // Register 服务注册
 func (register *EtcdV3Registry) Register(serviceName string, metadata string) error {
+
+	ctx := context.Background()
+
 	// 设置租约时间
-	resp, err := register.kv.Grant(context.Background(), register.Lease)
+	resp, err := register.kv.Grant(ctx, register.Lease)
 	if err != nil {
 		return err
 	}
@@ -120,13 +124,13 @@ func (register *EtcdV3Registry) Register(serviceName string, metadata string) er
 	}()
 
 	// 注册服务并绑定租约
-	_, err = register.kv.Put(context.Background(), serviceName, register.ServiceAddress, clientv3.WithLease(resp.ID))
+	_, err = register.kv.Put(ctx, serviceName, register.ServiceAddress, clientv3.WithLease(resp.ID))
 	if err != nil {
 		return err
 	}
 
 	// 设置续租 并定期发送续租请求(心跳)
-	leaseRespChan, err := register.kv.KeepAlive(context.Background(), resp.ID)
+	leaseRespChan, err := register.kv.KeepAlive(ctx, resp.ID)
 
 	if err != nil {
 		return err

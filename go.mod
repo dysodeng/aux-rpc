@@ -16,5 +16,4 @@ require (
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	google.golang.org/genproto v0.0.0-20210712171009-5404628d0f46 // indirect
 	google.golang.org/grpc v1.39.0 // indirect
-	github.com/gin-gonic/gin v1.6.3
 )

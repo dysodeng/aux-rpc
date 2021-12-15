@@ -117,11 +117,11 @@ func (r *etcdResolver) resolveNow() {
 		return
 	}
 
-	r.storeLock.Lock()
 	for _, kv := range resp.Kvs {
+		r.storeLock.Lock()
 		r.store[string(kv.Value)] = struct{}{}
+		r.storeLock.Unlock()
 	}
-	r.storeLock.Unlock()
 
 	r.updateTargetState()
 }

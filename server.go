@@ -27,7 +27,7 @@ type Server struct {
 type AuthFunc func(ctx context.Context, token string) error
 
 // NewServer 新建服务注册
-func NewServer(registry registry.Registry, opt ...grpc.ServerOption) *Server {
+func NewServer(registry registry.Registry, opt ...grpc.ServerOption) (*Server, error) {
 
 	var interceptorStream []grpc.StreamServerInterceptor
 	var interceptor []grpc.UnaryServerInterceptor
@@ -69,10 +69,10 @@ func NewServer(registry registry.Registry, opt ...grpc.ServerOption) *Server {
 
 	err := server.registry.Init()
 	if err != nil {
-		log.Panicln(err)
+		return nil, err
 	}
 
-	return server
+	return server, nil
 }
 
 // Register 注册服务
@@ -98,17 +98,19 @@ func (s *Server) Register(serviceName string, service interface{}, grpcRegister 
 }
 
 // Serve 启动服务监听
-func (s *Server) Serve(address string) {
+func (s *Server) Serve(address string) error {
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
-		log.Fatalf("rpc server net.Listen err: %v", err)
+		return errors.Wrap(err, "gRPC server net.Listen err")
 	}
-	log.Printf("listening and serving grpc on %s\n", address)
+	log.Printf("listening and serving gRPC on %s\n", address)
 
 	err = s.grpcServer.Serve(listener)
 	if err != nil {
-		log.Fatalf("grpcServer.Serve err: %v", err)
+		return errors.Wrap(err, "grpcServer.Serve err")
 	}
+
+	return nil
 }
 
 // Stop 服务停止
@@ -119,7 +121,7 @@ func (s *Server) Stop() error {
 	}
 	s.grpcServer.Stop()
 
-	log.Println("grpc server stop")
+	log.Println("gRPC server stop")
 
 	return nil
 }

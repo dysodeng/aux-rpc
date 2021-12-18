@@ -57,6 +57,8 @@ type service struct {
 
 var initOnceLock sync.Once
 
+const defaultTimeout = 5
+
 // initEtcd 初始化etcd连接
 func (register *EtcdV3Registry) initEtcd() error {
 
@@ -66,10 +68,10 @@ func (register *EtcdV3Registry) initEtcd() error {
 	initOnceLock.Do(func() {
 		cli, err = clientv3.New(clientv3.Config{
 			Endpoints:   register.EtcdServers,
-			DialTimeout: 5 * time.Second,
+			DialTimeout: defaultTimeout * time.Second,
 		})
 
-		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), defaultTimeout*time.Second)
 		defer cancel()
 		_, err = cli.Status(timeoutCtx, register.EtcdServers[0])
 

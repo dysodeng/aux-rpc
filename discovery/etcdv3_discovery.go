@@ -22,7 +22,7 @@ type EtcdV3Discovery struct {
 	// 全局服务快照表
 	serviceStore map[string]map[string]struct{}
 	// 服务快照表安全锁
-	storeLock sync.RWMutex
+	storeLock sync.Mutex
 	// 基础路径
 	basePath string
 }
@@ -72,7 +72,7 @@ type etcdResolver struct {
 	target    resolver.Target
 	cc        resolver.ClientConn
 	store     map[string]struct{}
-	storeLock sync.RWMutex
+	storeLock sync.Mutex
 	stopCh    chan struct{}
 	// rn channel is used by ResolveNow() to force an immediate resolution of the target.
 	rn chan struct{}

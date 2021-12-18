@@ -32,7 +32,7 @@ type EtcdV3Registry struct {
 
 	// 租约时长(秒)
 	Lease     int64
-	metasLock sync.RWMutex
+	metasLock sync.Mutex
 	metas     map[string]string
 
 	// Metrics 监控
@@ -69,11 +69,15 @@ func (register *EtcdV3Registry) initEtcd() error {
 			DialTimeout: 5 * time.Second,
 		})
 
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		_, err = cli.Status(timeoutCtx, register.EtcdServers[0])
+
 		register.kv = cli
 	})
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "could not connect to etcd")
 	}
 
 	return nil
@@ -159,7 +163,7 @@ func (register *EtcdV3Registry) Register(serviceName string, metadata string) er
 	register.metas[serviceName] = metadata
 	register.metasLock.Unlock()
 
-	log.Printf("register grpc service: %s", serviceName)
+	log.Printf("register gRPC service: %s", serviceName)
 
 	return nil
 }
@@ -188,11 +192,11 @@ func (register *EtcdV3Registry) Unregister(serviceName string) error {
 	}()
 
 	// 撤销租约
-	if _, err := register.kv.Revoke(context.Background(), ser.leaseID); err != nil {
+	if _, err = register.kv.Revoke(context.Background(), ser.leaseID); err != nil {
 		return err
 	}
 
-	log.Printf("unregister service: %s", serviceName)
+	log.Printf("unregister gRPC service: %s", serviceName)
 
 	return nil
 }

@@ -69,7 +69,7 @@ func (register *EtcdV3Registry) initEtcd() error {
 			DialTimeout: 5 * time.Second,
 		})
 
-		timeoutCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		_, err = cli.Status(timeoutCtx, register.EtcdServers[0])
 

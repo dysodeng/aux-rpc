@@ -47,13 +47,14 @@ func (d *EtcdV3Discovery) Build(target resolver.Target, cc resolver.ClientConn, 
 	d.storeLock.Unlock()
 
 	r := &etcdResolver{
-		kv:     d.kv,
-		target: target,
-		cc:     cc,
-		store:  d.serviceStore[target.Endpoint],
-		stopCh: make(chan struct{}, 1),
-		rn:     make(chan struct{}, 1),
-		t:      time.NewTicker(defaultFreq),
+		kv:       d.kv,
+		target:   target,
+		cc:       cc,
+		store:    d.serviceStore[target.Endpoint],
+		basePath: d.basePath,
+		stopCh:   make(chan struct{}, 1),
+		rn:       make(chan struct{}, 1),
+		t:        time.NewTicker(defaultFreq),
 	}
 
 	go r.start(context.Background())
@@ -64,7 +65,7 @@ func (d *EtcdV3Discovery) Build(target resolver.Target, cc resolver.ClientConn, 
 }
 
 func (d *EtcdV3Discovery) Scheme() string {
-	return d.basePath
+	return "etcdV3"
 }
 
 type etcdResolver struct {
@@ -72,6 +73,7 @@ type etcdResolver struct {
 	target    resolver.Target
 	cc        resolver.ClientConn
 	store     map[string]struct{}
+	basePath  string
 	storeLock sync.Mutex
 	stopCh    chan struct{}
 	// rn channel is used by ResolveNow() to force an immediate resolution of the target.
@@ -80,7 +82,7 @@ type etcdResolver struct {
 }
 
 func (r *etcdResolver) start(ctx context.Context) {
-	prefix := "/" + r.target.Scheme + "/" + r.target.Endpoint + "/"
+	prefix := "/" + r.basePath + "/" + r.target.Endpoint + "/"
 	rch := r.kv.Watch(ctx, prefix, clientv3.WithPrefix())
 	for {
 		select {
@@ -98,19 +100,20 @@ func (r *etcdResolver) start(ctx context.Context) {
 					r.storeLock.Lock()
 					r.store[string(ev.Kv.Value)] = struct{}{}
 					r.storeLock.Unlock()
+					r.updateTargetState()
 				case mvccpb.DELETE:
 					r.storeLock.Lock()
 					delete(r.store, strings.Replace(string(ev.Kv.Key), prefix, "", 1))
 					r.storeLock.Unlock()
+					r.updateTargetState()
 				}
 			}
-			r.updateTargetState()
 		}
 	}
 }
 
 func (r *etcdResolver) resolveNow() {
-	prefix := "/" + r.target.Scheme + "/" + r.target.Endpoint + "/"
+	prefix := "/" + r.basePath + "/" + r.target.Endpoint + "/"
 	resp, err := r.kv.Get(context.Background(), prefix, clientv3.WithPrefix())
 	if err != nil {
 		r.cc.ReportError(errors.Wrap(err, "get init endpoints"))

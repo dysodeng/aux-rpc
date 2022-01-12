@@ -91,7 +91,6 @@ func (r *etcdResolver) start(ctx context.Context) {
 		case <-r.t.C:
 			r.ResolveNow(resolver.ResolveNowOptions{})
 		case <-r.stopCh:
-			_ = r.kv.Close()
 			return
 		case wresp := <-rch:
 			for _, ev := range wresp.Events {

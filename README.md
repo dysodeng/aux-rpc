@@ -2,6 +2,12 @@ aux-rpc
 ==========
 基于grpc-go封装的rpc库
 
+Installation
+------------
+```sh
+go get github.com/dysodeng/aux-rpc
+```
+
 Usage
 -----
 创建服务proto: demo.proto
@@ -147,10 +153,4 @@ go run server.go
 客户端访问
 ```sh
 go run client.go
-```
-
-Installation
-------------
-```sh
-go get github.com/dysodeng/aux-rpc
 ```

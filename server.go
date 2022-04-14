@@ -16,41 +16,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Server grpc服务注册
-type Server struct {
-	// registry 服务注册器
-	registry registry.Registry
-	// grpcServer grpc
-	grpcServer *grpc.Server
-	// metrics 监控
-	metrics        metrics.Meter
-	showMetricsLog bool
-	grpcOptions    []grpc.ServerOption
-}
-
-type AuthFunc func(ctx context.Context, token string) error
-
-// Option 服务选项
-type Option func(server *Server)
-
-// WithMetrics 设置监控
-func WithMetrics(metrics metrics.Meter, showMetricsLog bool) Option {
-	return func(server *Server) {
-		server.metrics = metrics
-		server.showMetricsLog = showMetricsLog
-	}
-}
-
-// WithGrpcServiceOption 设置grpc选项
-func WithGrpcServiceOption(opts ...grpc.ServerOption) Option {
-	return func(server *Server) {
-		server.grpcOptions = opts
-	}
-}
-
 // NewServer 新建服务注册
 func NewServer(registry registry.Registry, opts ...Option) (*Server, error) {
-
 	server := &Server{
 		registry: registry,
 	}
@@ -100,7 +67,7 @@ func (s *Server) Register(serviceName string, service interface{}, grpcRegister 
 	// 注册grpc服务
 	fn := reflect.ValueOf(grpcRegister)
 	if fn.Kind() != reflect.Func {
-		return errors.New("`grpcRegister` is not a grpc registration function")
+		return errors.New("`grpcRegister` is not a valid grpc registration function")
 	}
 
 	params := make([]reflect.Value, 2)

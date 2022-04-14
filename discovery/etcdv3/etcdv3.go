@@ -12,8 +12,8 @@ const (
 	defaultNamespace      = "example/auxrcx" // 默认服务命名空间
 )
 
-// NewEtcdV3Discovery new etcd Builder
-func NewEtcdV3Discovery(etcdClient *clientv3.Client, opts ...BuilderOption) *Builder {
+// NewEtcdV3Builder new etcd Builder
+func NewEtcdV3Builder(etcdClient *clientv3.Client, opts ...BuilderOption) *Builder {
 	builder := &Builder{
 		kv:                 etcdClient,
 		serviceStore:       make(map[string]map[string]struct{}),

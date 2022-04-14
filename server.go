@@ -22,31 +22,59 @@ type Server struct {
 	registry registry.Registry
 	// grpcServer grpc
 	grpcServer *grpc.Server
+	// metrics 监控
+	metrics        metrics.Meter
+	showMetricsLog bool
+	grpcOptions    []grpc.ServerOption
 }
 
 type AuthFunc func(ctx context.Context, token string) error
 
+// Option 服务选项
+type Option func(server *Server)
+
+// WithMetrics 设置监控
+func WithMetrics(metrics metrics.Meter, showMetricsLog bool) Option {
+	return func(server *Server) {
+		server.metrics = metrics
+		server.showMetricsLog = showMetricsLog
+	}
+}
+
+// WithGrpcServiceOption 设置grpc选项
+func WithGrpcServiceOption(opts ...grpc.ServerOption) Option {
+	return func(server *Server) {
+		server.grpcOptions = opts
+	}
+}
+
 // NewServer 新建服务注册
-func NewServer(registry registry.Registry, opt ...grpc.ServerOption) (*Server, error) {
+func NewServer(registry registry.Registry, opts ...Option) (*Server, error) {
+
+	server := &Server{
+		registry: registry,
+	}
+
+	for _, opt := range opts {
+		opt(server)
+	}
 
 	var interceptorStream []grpc.StreamServerInterceptor
 	var interceptor []grpc.UnaryServerInterceptor
 
 	// Metrics监控
-	if registry.GetMetrics() != nil {
-		m := registry.GetMetrics()
-		metrics.GetOrRegister("grpc_tps", m)
-
+	if server.metrics != nil {
+		metrics.GetOrRegister("grpc_tps", server.metrics)
 		interceptor = append(interceptor, func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-			registry.GetMetrics().Mark(1)
+			server.metrics.Mark(1)
 			return handler(ctx, req)
 		})
 		interceptorStream = append(interceptorStream, func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-			registry.GetMetrics().Mark(1)
+			server.metrics.Mark(1)
 			return handler(srv, ss)
 		})
 
-		if registry.IsShowMetricsLog() {
+		if server.showMetricsLog {
 			go func() {
 				metrics.Log(metrics.DefaultRegistry,
 					30*time.Second,
@@ -56,21 +84,13 @@ func NewServer(registry registry.Registry, opt ...grpc.ServerOption) (*Server, e
 	}
 
 	if len(interceptor) > 0 {
-		opt = append(opt, grpc.UnaryInterceptor(grpcMiddleware.ChainUnaryServer(interceptor...)))
+		server.grpcOptions = append(server.grpcOptions, grpc.UnaryInterceptor(grpcMiddleware.ChainUnaryServer(interceptor...)))
 	}
 	if len(interceptorStream) > 0 {
-		opt = append(opt, grpc.StreamInterceptor(grpcMiddleware.ChainStreamServer(interceptorStream...)))
+		server.grpcOptions = append(server.grpcOptions, grpc.StreamInterceptor(grpcMiddleware.ChainStreamServer(interceptorStream...)))
 	}
 
-	server := &Server{
-		registry:   registry,
-		grpcServer: grpc.NewServer(opt...),
-	}
-
-	err := server.registry.Init()
-	if err != nil {
-		return nil, err
-	}
+	server.grpcServer = grpc.NewServer(server.grpcOptions...)
 
 	return server, nil
 }
@@ -98,7 +118,8 @@ func (s *Server) Register(serviceName string, service interface{}, grpcRegister 
 }
 
 // Serve 启动服务监听
-func (s *Server) Serve(address string) error {
+func (s *Server) Serve() error {
+	address := s.registry.GetServiceListener()
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
 		return errors.Wrap(err, "gRPC server net.Listen err")

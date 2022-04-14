@@ -82,8 +82,8 @@ func main() {
 package main
 import (
     "context"
-    "fmt"
     "github.com/dysodeng/aux-rpc/discovery"
+    etcdDiscovery "github.com/dysodeng/aux-rpc/discovery/etcdv3"
     demo "github.com/dysodeng/aux-rpc/proto"
     "github.com/dysodeng/aux-rpc/rpc/service"
     clientv3 "go.etcd.io/etcd/client/v3"
@@ -100,14 +100,22 @@ func main() {
     if err != nil {
         log.Fatalln(err)
     }
-    d := discovery.NewEtcdV3Discovery(etcdClient, "demo/rpc")
+    resolverBuilder := etcdDiscovery.NewEtcdV3Builder(etcdClient, etcdDiscovery.WithNamespace("demo/grpc"))
 
-    // 连接rpc 
-    conn, err := grpc.Dial(
-        d.Scheme()+":///HelloService",
-        grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"LoadBalancingPolicy": "%s"}`, "round_robin")),
-        grpc.WithInsecure(),
-        grpc.WithBlock(), 
+    // 连接超时
+    timeoutCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+    defer cancel()
+
+    // 连接gRPC服务
+    conn, err := discovery.Discovery(
+        timeoutCtx,
+        resolverBuilder,
+        "DemoService",
+        discovery.WithLoadBalance("round_robin"),
+        discovery.WithGrpcDialOption(
+            grpc.WithInsecure(),
+            grpc.WithBlock(),
+        ),
     )
     
     demoCtx, demoCancel := context.WithDeadline(context.Background(), time.Now().Add(3 * time.Second))

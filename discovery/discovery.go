@@ -41,16 +41,15 @@ func Discovery(ctx context.Context, builder resolver.Builder, serviceName string
 		opt(o)
 	}
 
-	grpcOption := o.grpcDialOptions
 	if o.lb != "" {
-		grpcOption = append(grpcOption, grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"LoadBalancingPolicy": "%s"}`, o.lb)))
+		o.grpcDialOptions = append(o.grpcDialOptions, grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"LoadBalancingPolicy": "%s"}`, o.lb)))
 	}
 
 	// 连接rpc服务
 	conn, err := grpc.DialContext(
 		ctx,
 		fmt.Sprintf("%s:///%s", builder.Scheme(), serviceName),
-		grpcOption...,
+		o.grpcDialOptions...,
 	)
 
 	if err != nil {

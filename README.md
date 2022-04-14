@@ -26,7 +26,7 @@ service Demo {
 
 编译proto
 ```sh
-protoc --go_out=plugins=grpc:./ ./demo.proto
+protoc --go_out=plugins=grpc:./ ./proto/demo.proto
 ```
 
 创建Server端 server.go
@@ -34,8 +34,8 @@ protoc --go_out=plugins=grpc:./ ./demo.proto
 package main
 import (
 	"github.com/dysodeng/aux-rpc"
-	"github.com/dysodeng/aux-rpc/registry"
-	demo "github.com/dysodeng/aux-rpc/rpc/proto"
+	demo "github.com/dysodeng/aux-rpc/proto"
+	"github.com/dysodeng/aux-rpc/registry/etcdv3"
 	"github.com/dysodeng/aux-rpc/rpc/service"
 	"github.com/rcrowley/go-metrics"
 	"log"
@@ -43,15 +43,19 @@ import (
 	"os/signal"
 )
 func main() {
-    etcdV3Register := &registry.EtcdV3Registry{
-        ServiceAddress: "127.0.0.1:9000",
-        EtcdServers:    []string{"localhost:2379"},
-        BasePath:       "demo/rpc",
-        Lease:          5,
-        Metrics: 		metrics.NewMeter(),
-    }
-    
-    rpcServer := auxrpc.NewServer(etcdV3Register)
+	etcdV3Register, err := etcdv3.NewEtcdV3Registry(
+		"127.0.0.1:9000",
+		[]string{"localhost:2379"},
+		etcdv3.WithNamespace("demo/grpc"),
+	)
+	if err != nil {
+		log.Panicf("%+v", err)
+	}
+
+	rpcServer, err := auxrpc.NewServer(etcdV3Register, auxrpc.WithMetrics(metrics.NewMeter(), true))
+	if err != nil {
+		log.Panicf("%+v", err)
+	}
     defer func() {
         if err := recover(); err != nil {
             _ = rpcServer.Stop()
@@ -61,7 +65,7 @@ func main() {
     _ = rpcServer.Register("DemoService", &service.DemoService{}, demo.RegisterDemoServer, "")
 
     go func() {
-        rpcServer.Serve("127.0.0.1:9000")
+        rpcServer.Serve()
     }()
 
     // 等待中断信号以优雅地关闭服务器
@@ -80,7 +84,7 @@ import (
     "context"
     "fmt"
     "github.com/dysodeng/aux-rpc/discovery"
-    demo "github.com/dysodeng/aux-rpc/rpc/proto"
+    demo "github.com/dysodeng/aux-rpc/proto"
     "github.com/dysodeng/aux-rpc/rpc/service"
     clientv3 "go.etcd.io/etcd/client/v3"
     "google.golang.org/grpc"

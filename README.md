@@ -33,29 +33,29 @@ protoc --go_out=plugins=grpc:./ ./proto/demo.proto
 ```go
 package main
 import (
-	"github.com/dysodeng/aux-rpc"
-	demo "github.com/dysodeng/aux-rpc/proto"
-	"github.com/dysodeng/aux-rpc/registry/etcdv3"
-	"github.com/dysodeng/aux-rpc/rpc/service"
-	"github.com/rcrowley/go-metrics"
-	"log"
-	"os"
-	"os/signal"
+    "github.com/dysodeng/aux-rpc"
+    demo "github.com/dysodeng/aux-rpc/proto"
+    "github.com/dysodeng/aux-rpc/registry/etcdv3"
+    "github.com/dysodeng/aux-rpc/rpc/service"
+    "github.com/rcrowley/go-metrics"
+    "log"
+    "os"
+    "os/signal"
 )
 func main() {
-	etcdV3Register, err := etcdv3.NewEtcdV3Registry(
-		"127.0.0.1:9000",
-		[]string{"localhost:2379"},
-		etcdv3.WithNamespace("demo/grpc"),
-	)
-	if err != nil {
-		log.Panicf("%+v", err)
-	}
+    etcdV3Register, err := etcdv3.NewEtcdV3Registry(
+        "127.0.0.1:9000",
+        []string{"localhost:2379"},
+        etcdv3.WithNamespace("demo/grpc"),
+    )
+    if err != nil {
+        log.Panicf("%+v", err)
+    }
 
-	rpcServer, err := auxrpc.NewServer(etcdV3Register, auxrpc.WithMetrics(metrics.NewMeter(), true))
-	if err != nil {
-		log.Panicf("%+v", err)
-	}
+    rpcServer, err := auxrpc.NewServer(etcdV3Register, auxrpc.WithMetrics(metrics.NewMeter(), true))
+    if err != nil {
+        log.Panicf("%+v", err)
+    }
     defer func() {
         if err := recover(); err != nil {
             _ = rpcServer.Stop()
@@ -93,22 +93,22 @@ import (
     "time"
 )
 func main() {
-	etcdClient, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
-		DialTimeout: 5 * time.Second,
-	})
-	if err != nil {
-		log.Fatalln(err)
-	}
-	d := discovery.NewEtcdV3Discovery(etcdClient, "demo/rpc")
+    etcdClient, err := clientv3.New(clientv3.Config{
+        Endpoints:   []string{"127.0.0.1:2379"},
+        DialTimeout: 5 * time.Second,
+    })
+    if err != nil {
+        log.Fatalln(err)
+    }
+    d := discovery.NewEtcdV3Discovery(etcdClient, "demo/rpc")
 
-	// 连接rpc
-	conn, err := grpc.Dial(
-		d.Scheme()+":///HelloService",
-		grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"LoadBalancingPolicy": "%s"}`, "round_robin")),
-		grpc.WithInsecure(),
-		grpc.WithBlock(),
-	)
+    // 连接rpc 
+    conn, err := grpc.Dial(
+        d.Scheme()+":///HelloService",
+        grpc.WithDefaultServiceConfig(fmt.Sprintf(`{"LoadBalancingPolicy": "%s"}`, "round_robin")),
+        grpc.WithInsecure(),
+        grpc.WithBlock(), 
+    )
     
     demoCtx, demoCancel := context.WithDeadline(context.Background(), time.Now().Add(3 * time.Second))
     defer demoCancel()

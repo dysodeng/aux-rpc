@@ -49,8 +49,12 @@ import (
     "os/signal"
 )
 func main() {
+    
+    // 服务监听地址
+    listen := "127.0.0.1:9000"
+	
     etcdV3Register, err := etcdv3.NewEtcdV3Registry(
-        "127.0.0.1:9000",
+        listen,
         []string{"localhost:2379"},
         etcdv3.WithNamespace("demo/grpc"),
     )
@@ -58,7 +62,11 @@ func main() {
         log.Panicf("%+v", err)
     }
 
-    rpcServer, err := auxrpc.NewServer(etcdV3Register, auxrpc.WithMetrics(metrics.NewMeter(), true))
+    rpcServer, err := auxrpc.NewServer(
+        listen,
+        etcdV3Register, 
+        auxrpc.WithMetrics(metrics.NewMeter(), true),
+    )
     if err != nil {
         log.Panicf("%+v", err)
     }

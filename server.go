@@ -17,8 +17,9 @@ import (
 )
 
 // NewServer 新建服务注册
-func NewServer(registry registry.Registry, opts ...Option) (*Server, error) {
+func NewServer(listen string, registry registry.Registry, opts ...Option) (*Server, error) {
 	server := &Server{
+		listen:   listen,
 		registry: registry,
 	}
 
@@ -83,12 +84,11 @@ func (s *Server) Register(serviceName string, service interface{}, grpcRegister 
 
 // Serve 启动服务监听
 func (s *Server) Serve() error {
-	address := s.registry.GetServiceListener()
-	listener, err := net.Listen("tcp", address)
+	listener, err := net.Listen("tcp", s.listen)
 	if err != nil {
 		return errors.Wrap(err, "gRPC server net.Listen err")
 	}
-	log.Printf("listening and serving gRPC on %s\n", address)
+	log.Printf("listening and serving gRPC on %s\n", s.listen)
 
 	err = s.grpcServer.Serve(listener)
 	if err != nil {

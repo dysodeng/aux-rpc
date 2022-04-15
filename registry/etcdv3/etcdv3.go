@@ -24,9 +24,9 @@ const (
 )
 
 // NewEtcdV3Registry new etcd registry
-func NewEtcdV3Registry(listener string, etcdAddress []string, opts ...RegistryOption) (registry.Registry, error) {
+func NewEtcdV3Registry(serviceListenAddress string, etcdAddress []string, opts ...RegistryOption) (registry.Registry, error) {
 	v3 := &etcdV3{
-		serviceAddress: listener,
+		serviceAddress: serviceListenAddress,
 		etcdServers:    etcdAddress,
 		namespace:      defaultNamespace,
 		services:       make(map[string]service),
@@ -153,9 +153,4 @@ func (register *etcdV3) Stop() error {
 	}
 
 	return register.kv.Close()
-}
-
-// GetServiceListener 获取服务监听地址
-func (register *etcdV3) GetServiceListener() string {
-	return register.serviceAddress
 }

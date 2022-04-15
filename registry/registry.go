@@ -13,7 +13,4 @@ type Registry interface {
 
 	// Stop 停止服务注册
 	Stop() error
-
-	// GetServiceListener 获取服务监听地址
-	GetServiceListener() string
 }

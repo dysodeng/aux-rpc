@@ -8,6 +8,8 @@ import (
 
 // Server grpc服务注册器
 type Server struct {
+	// listen 服务监听地址
+	listen string
 	// registry 服务注册器
 	registry registry.Registry
 	// grpcServer grpc

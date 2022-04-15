@@ -26,17 +26,14 @@ func NewServer(registry registry.Registry, opts ...Option) (*Server, error) {
 		opt(server)
 	}
 
-	var interceptorStream []grpc.StreamServerInterceptor
-	var interceptor []grpc.UnaryServerInterceptor
-
 	// Metrics监控
 	if server.metrics != nil {
 		metrics.GetOrRegister("grpc_tps", server.metrics)
-		interceptor = append(interceptor, func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+		server.interceptor = append(server.interceptor, func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 			server.metrics.Mark(1)
 			return handler(ctx, req)
 		})
-		interceptorStream = append(interceptorStream, func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		server.interceptorStream = append(server.interceptorStream, func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 			server.metrics.Mark(1)
 			return handler(srv, ss)
 		})
@@ -50,11 +47,11 @@ func NewServer(registry registry.Registry, opts ...Option) (*Server, error) {
 		}
 	}
 
-	if len(interceptor) > 0 {
-		server.grpcOptions = append(server.grpcOptions, grpc.UnaryInterceptor(grpcMiddleware.ChainUnaryServer(interceptor...)))
+	if len(server.interceptor) > 0 {
+		server.grpcOptions = append(server.grpcOptions, grpc.UnaryInterceptor(grpcMiddleware.ChainUnaryServer(server.interceptor...)))
 	}
-	if len(interceptorStream) > 0 {
-		server.grpcOptions = append(server.grpcOptions, grpc.StreamInterceptor(grpcMiddleware.ChainStreamServer(interceptorStream...)))
+	if len(server.interceptorStream) > 0 {
+		server.grpcOptions = append(server.grpcOptions, grpc.StreamInterceptor(grpcMiddleware.ChainStreamServer(server.interceptorStream...)))
 	}
 
 	server.grpcServer = grpc.NewServer(server.grpcOptions...)

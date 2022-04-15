@@ -1,7 +1,6 @@
 package auxrpc
 
 import (
-	"context"
 	"github.com/dysodeng/aux-rpc/registry"
 	"github.com/rcrowley/go-metrics"
 	"google.golang.org/grpc"
@@ -17,9 +16,10 @@ type Server struct {
 	metrics        metrics.Meter
 	showMetricsLog bool
 	grpcOptions    []grpc.ServerOption
+	// 拦截器
+	interceptor       []grpc.UnaryServerInterceptor
+	interceptorStream []grpc.StreamServerInterceptor
 }
-
-type AuthFunc func(ctx context.Context, token string) error
 
 // Option 服务选项
 type Option func(server *Server)
@@ -36,5 +36,19 @@ func WithMetrics(metrics metrics.Meter, showMetricsLog bool) Option {
 func WithGrpcServiceOption(opts ...grpc.ServerOption) Option {
 	return func(server *Server) {
 		server.grpcOptions = opts
+	}
+}
+
+// WithGrpcUnaryServerInterceptor 设置grpc一元拦截器
+func WithGrpcUnaryServerInterceptor(interceptor ...grpc.UnaryServerInterceptor) Option {
+	return func(server *Server) {
+		server.interceptor = interceptor
+	}
+}
+
+// WithStreamServerInterceptor 设置grpc流式请求拦截器
+func WithStreamServerInterceptor(interceptor ...grpc.StreamServerInterceptor) Option {
+	return func(server *Server) {
+		server.interceptorStream = interceptor
 	}
 }

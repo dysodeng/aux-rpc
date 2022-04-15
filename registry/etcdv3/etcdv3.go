@@ -62,7 +62,7 @@ func NewEtcdV3Registry(serviceListenAddress string, etcdAddress []string, opts .
 }
 
 // Register 服务注册
-func (register *etcdV3) Register(serviceName string, metadata string) error {
+func (register *etcdV3) Register(serviceName, metadata string) error {
 
 	ctx := context.Background()
 

@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Server grpc服务注册
+// Server grpc服务注册器
 type Server struct {
 	// registry 服务注册器
 	registry registry.Registry
@@ -15,7 +15,8 @@ type Server struct {
 	// metrics 监控
 	metrics        metrics.Meter
 	showMetricsLog bool
-	grpcOptions    []grpc.ServerOption
+	// grpc server option
+	grpcOptions []grpc.ServerOption
 	// 拦截器
 	interceptor       []grpc.UnaryServerInterceptor
 	interceptorStream []grpc.StreamServerInterceptor

@@ -9,7 +9,7 @@ import (
 
 const (
 	defaultResolveNowFreq = time.Minute * 30 // 强制 ResolveNow 默认间隔时长(分钟)
-	defaultNamespace      = "example/auxrcx" // 默认服务命名空间
+	defaultNamespace      = "grpc"           // 默认服务命名空间
 )
 
 // NewEtcdV3Builder new etcd Builder

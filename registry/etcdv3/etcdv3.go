@@ -3,11 +3,12 @@ package etcdv3
 import (
 	"context"
 	"fmt"
-	"github.com/dysodeng/aux-rpc/registry"
 	"log"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/dysodeng/aux-rpc/registry"
 
 	"github.com/pkg/errors"
 
@@ -17,9 +18,9 @@ import (
 var initOnceLock sync.Once
 
 const (
-	defaultLease     = 5                // 默认服务租约时长(秒)
-	defaultTimeout   = 5                // 默认etcd连接超时时长(秒)
-	defaultNamespace = "example/auxrcx" // 默认服务命名空间
+	defaultLease     = 5      // 默认服务租约时长(秒)
+	defaultTimeout   = 5      // 默认etcd连接超时时长(秒)
+	defaultNamespace = "grpc" // 默认服务命名空间
 )
 
 // NewEtcdV3Registry new etcd registry

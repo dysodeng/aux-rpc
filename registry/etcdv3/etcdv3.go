@@ -42,10 +42,16 @@ func NewEtcdV3Registry(serviceListenAddress string, etcdAddress []string, opts .
 	var cli *clientv3.Client
 
 	initOnceLock.Do(func() {
-		cli, err = clientv3.New(clientv3.Config{
+		conf := clientv3.Config{
 			Endpoints:   v3.etcdServers,
 			DialTimeout: defaultTimeout * time.Second,
-		})
+			Username:    v3.etcdUsername,
+			Password:    v3.etcdPassword,
+		}
+		if v3.tlsConfig != nil {
+			conf.TLS = v3.tlsConfig
+		}
+		cli, err = clientv3.New(conf)
 
 		timeoutCtx, cancel := context.WithTimeout(context.Background(), defaultTimeout*time.Second)
 		defer cancel()

@@ -1,8 +1,10 @@
 package etcdv3
 
 import (
-	clientv3 "go.etcd.io/etcd/client/v3"
+	"crypto/tls"
 	"sync"
+
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // etcdV3 implements etcd registry.
@@ -11,7 +13,10 @@ type etcdV3 struct {
 	serviceAddress string
 
 	// etcd addresses
-	etcdServers []string
+	etcdServers  []string
+	etcdUsername string
+	etcdPassword string
+	tlsConfig    *tls.Config
 
 	// namespace for auxrcx server, eg. example/auxrcx
 	namespace string
@@ -43,6 +48,21 @@ func WithNamespace(namespace string) RegistryOption {
 func WithLease(lease int64) RegistryOption {
 	return func(v3 *etcdV3) {
 		v3.lease = lease
+	}
+}
+
+// WithEtcdAuth 设置etcd认证
+func WithEtcdAuth(username, password string) RegistryOption {
+	return func(v3 *etcdV3) {
+		v3.etcdUsername = username
+		v3.etcdPassword = password
+	}
+}
+
+// WithEtcdTLS 设置etcd tls证书
+func WithEtcdTLS(t *tls.Config) RegistryOption {
+	return func(v3 *etcdV3) {
+		v3.tlsConfig = t
 	}
 }
 
